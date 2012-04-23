@@ -1,132 +1,154 @@
 // jQuery Plugin Boilerplate
-// A boilerplate for kick-starting jQuery plugins development
-// version 1.3, May 07th, 2011
+// A boilerplate for jumpstarting jQuery plugins development
+// version 1.1, May 14th, 2011
 // by Stefan Gabos
-// with help from Roger Padilla, Shinya, JohannC, Steven Black, Rob Lifford
 
 // remember to change every instance of "pluginName" to the name of your plugin!
 (function($) {
 
-    // here it goes!
-    $.fn.cropan = function(method) {
+    // here we go!
+    $.cropan = function(element, options) {
+
+        // plugin's default options
+        // this is private property and is  accessible only from inside the plugin
+        var defaults = {
+
+           	width: '100',
+        		animationSpeed: '1000',
+        		pauseLength: 300,
+						autoStart: false,
+						easing: "linear"
+						//startOnMouseenter: true
+
+        }
+
+        // to avoid confusions, use "plugin" to reference the
+        // current instance of the object
+        var plugin = this;
+
+        // this will hold the merged default, and user-provided options
+        // plugin's properties will be available through this object like:
+        // plugin.settings.propertyName from inside the plugin or
+        // element.data('pluginName').settings.propertyName from outside the plugin,
+        // where "element" is the element the plugin is attached to;
+        plugin.settings = {}
+
+        var $element = $(element), // reference to the jQuery version of DOM element
+             element = element;    // reference to the actual DOM element
+
+        // the "constructor" method that gets called when the object is created
+        plugin.init = function() {
+
+            // the plugin's final properties are the merged default and
+            // user-provided options (if any)
+            plugin.settings = $.extend({}, defaults, options);
+
+           	// code goes here           
+            if(eligible())
+		        {
+		        	plugin.settings.overflow = $element.width() - plugin.settings.width;
+		        
+		       		//wrap el in mask 
+		        	$element.wrap('<div class="cropan-mask" style="position: relative; overflow: hidden; width: '+plugin.settings.width+'px;" />')
+		        	$element.css({'position': 'relative', 'left': '0'});
+						}
+
+						if(plugin.settings.autoStart)
+							plugin.startAnimation();
+        }
 
         // public methods
-        // to keep the $.fn namespace uncluttered, collect all of the plugin's methods in an object literal and call
-        // them by passing the string name of the method to the plugin
-        //
-        // public methods can be called as
-        // element.pluginName('methodName', arg1, arg2, ... argn)
-        // where "element" is the element the plugin is attached to, "pluginName" is the name of your plugin and
-        // "methodName" is the name of a function available in the "methods" object below; arg1 ... argn are arguments
-        // to be passed to the method
-        //
-        // or, from inside the plugin:
-        // methods.methodName(arg1, arg2, ... argn)
-        // where "methodName" is the name of a function available in the "methods" object below
-        var methods = {
+        // these methods can be called like:
+        // plugin.methodName(arg1, arg2, ... argn) from inside the plugin or
+        // element.data('pluginName').publicMethod(arg1, arg2, ... argn) from outside
+        // the plugin, where "element" is the element the plugin is attached to;
 
-            // this the constructor method that gets called when the object is created
-            init : function(options) {
+        // a public method. for demonstration purposes only - remove it!
+        plugin.startAnimation = function () {
+        	plugin.animating = true;
+        
+		    	if(eligible())
+		      {
+			    	//animate element
+			    	var animationLength = plugin.settings.animationSpeed * ( ( plugin.settings.overflow / 50 ) + 1 );
+			    	
+			    	$element.animate({left: plugin.settings.overflow*-1}, animationLength, plugin.settings.easing)
+			    					.delay(plugin.settings.pauseLength)
+			    					.animate({left: 0}, animationLength, plugin.settings.easing, function() { if(plugin.animating) { plugin.startAnimation(); } } );
+			    }
+		  	};
+		  	
+		  	plugin.stopAnimation = function () {
+		  		plugin.animating = false;
+		  		//$element.queue("fx", []);
+		  		//$element.animate({left: 0}, plugin.settings.animationLength, plugin.settings.easing, plugin.startAnimation);2
+		  	}
+		  	
+		  	plugin.animateLeft = function () {
+  		    if(eligible())
+		      {
+			    	//animate element
+			    	var animationLength = plugin.settings.animationSpeed * ( ( plugin.settings.overflow / 50 ) + 1 );
+			    	
+			    	$element.animate({left: plugin.settings.overflow*-1}, {queue: false}, animationLength, plugin.settings.easing);
+			    }
+		  	};
 
-                // the plugin's final properties are the merged default and user-provided properties (if any)
-                // this has the advantage of not polluting the defaults, making them re-usable
-                this.cropan.settings = $.extend({}, this.cropan.defaults, options);
-
-                // iterate through all the DOM elements we are attaching the plugin to
-                return this.each(function() {
-
-                    var $element = $(this), // reference to the jQuery version of the current DOM element
-                        element = this;     // reference to the actual DOM element
-
-                    // code goes here
-                    
-                    //check if el needs to be copped and panned
-                    if($element.width() > options.width)
-                    {
-                    	this.overflow = options.width - $element.width();
-                    
-                   		//wrap el in mask 
-                    	$element.wrap('<div class="cropan-mask" style="position: relative; overflow: hidden; width: '+options.width+'px;" />')
-                    	
-                    	$element.css({'position': 'relative', 'left': '0'});
-                    	
-                    	this.animateIt = function() {
-	                    	//animate element
-	                    	$element.delay(options.pauseLength)
-	                    					.animate({left: this.overflow}, options.animationLength, "linear")
-	                    					.delay(options.pauseLength)
-	                    					.animate({left: 0}, options.animationLength, "linear", this.animateIt);
-	                    					
-                    	}
-                    	
-                    	this.animateIt();
-										}
-                });
-
-            },
-
-            // a public method. for demonstration purposes only - remove it!
-            foo_public_method: function() {
-
-                // code goes here
-
-            }
-
-        }
+		  	plugin.animateRight= function () {
+  		    if(eligible())
+		      {
+			    	//animate element
+			    	var animationLength = plugin.settings.animationSpeed * ( ( plugin.settings.overflow / 50 ) + 1 );
+			    	
+			    	$element.animate({left: 0}, {queue: false}, animationLength, plugin.settings.easing);
+			    }
+		  	};
+		  	
 
         // private methods
-        // these methods can be called only from inside the plugin
-        //
-        // private methods can be called as
-        // helpers.methodName(arg1, arg2, ... argn)
-        // where "methodName" is the name of a function available in the "helpers" object below; arg1 ... argn are
-        // arguments to be passed to the method
-        var helpers = {
+        // these methods can be called only from inside the plugin like:
+        // methodName(arg1, arg2, ... argn)
 
-            // a private method. for demonstration purposes only - remove it!
-            foo_private_method: function() {
+        // a private method. for demonstration purposes only - remove it!
+        var eligible = function() {
 
-                // code goes here
+            if($element.width() > plugin.settings.width)
+            	return true;
+            else
+            	return false;
+
+        }
+
+        // fire up the plugin!
+        // call the "constructor" method
+        plugin.init();
+
+    }
+
+    // add the plugin to the jQuery.fn object
+    $.fn.cropan = function(options) {
+
+        // iterate through the DOM elements we are attaching the plugin to
+        return this.each(function() {
+
+            // if plugin has not already been attached to the element
+            if (undefined == $(this).data('cropan')) {
+
+                // create a new instance of the plugin
+                // pass the DOM element and the user-provided options as arguments
+                var plugin = new $.cropan(this, options);
+
+                // in the jQuery version of the element
+                // store a reference to the plugin object
+                // you can later access the plugin and its methods and properties like
+                // element.data('pluginName').publicMethod(arg1, arg2, ... argn) or
+                // element.data('pluginName').settings.propertyName
+                $(this).data('cropan', plugin);
 
             }
 
-        }
-
-        // if a method as the given argument exists
-        if (methods[method]) {
-
-            // call the respective method
-            return methods[method].apply(this, Array.prototype.slice.call(arguments, 1));
-
-        // if an object is given as method OR nothing is given as argument
-        } else if (typeof method === 'object' || !method) {
-
-            // call the initialization method
-            return methods.init.apply(this, arguments);
-
-        // otherwise
-        } else {
-
-            // trigger an error
-            $.error( 'Method "' +  method + '" does not exist in cropan plugin!');
-
-        }
+        });
 
     }
-
-    // plugin's default options
-    $.fn.cropan.defaults = {
-
-        width: '100',
-        animationLength: '1000',
-				pauseLength: '1000'
-    }
-
-    // this will hold the merged default and user-provided options
-    // you will have access to these options like:
-    // this.pluginName.settings.propertyName from inside the plugin or
-    // element.pluginName.settings.propertyName from outside the plugin, where "element" is the element the
-    // plugin is attached to;
-    $.fn.cropan.settings = {}
 
 })(jQuery);
